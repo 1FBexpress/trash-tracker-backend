@@ -1,36 +1,27 @@
-import fastify from 'fastify';
-import cors from '@fastify/cors';
-import { config as loadEnv } from 'dotenv';
-import apiRoutes from './routes';
+import fastify from "fastify";
+import cors from "@fastify/cors";
+import dotenv from "dotenv";
+dotenv.config();
 
-loadEnv();
+const app = fastify({ logger: true });
 
-const PORT = Number(process.env.PORT || 10000);
-const HOST = '0.0.0.0';
+const origins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",").map(s => s.trim())
+  : ["*"];
 
-const origins =
-  (process.env.CORS_ORIGINS?.split(',').map(s => s.trim()).filter(Boolean)) ??
-  ['http://localhost:3000', 'https://trash-tracker-frontend.onrender.com'];
-
-async function start() {
-  const app = fastify({ logger: true });
-
+async function register() {
   await app.register(cors, { origin: origins });
-
-  // Health + root
-  app.get('/', async () => ({ ok: true }));
-  app.get('/health', async () => ({ ok: true }));
-
-  // API routes (jobs)
-  app.register(apiRoutes, { prefix: '/api' });
-
-  try {
-    await app.listen({ host: HOST, port: PORT });
-    app.log.info(`Server listening at http://${HOST}:${PORT}`);
-  } catch (err) {
-    app.log.error(err);
-    process.exit(1);
-  }
+  app.get("/", async () => ({ ok: true }));
+  app.get("/health", async () => ({ status: "ok" }));
 }
 
-start();
+async function main() {
+  await register();
+  const port = Number(process.env.PORT || 10000);
+  await app.listen({ host: "0.0.0.0", port });
+}
+
+main().catch(err => {
+  app.log.error(err);
+  process.exit(1);
+});
