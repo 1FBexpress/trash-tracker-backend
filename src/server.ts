@@ -14,6 +14,11 @@ async function start() {
   app.get('/', async () => ({ ok: true }));
   app.get('/health', async () => ({ status: 'ok' }));
 
+  // Temporary demo route (no DB yet)
+  app.get('/jobs', async () => ([
+    { id: '1', title: 'Sample pickup', status: 'OPEN', createdAt: new Date().toISOString() }
+  ]));
+
   const port = Number(process.env.PORT || 10000);
   await app.listen({ port, host: '0.0.0.0' });
   console.log(`server listening on http://0.0.0.0:${port}`);
