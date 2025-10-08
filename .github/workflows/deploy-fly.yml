@@ -15,8 +15,24 @@ jobs:
       - name: Install Flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - name: Deploy using Fly.io (Dockerfile)
+      # Make sure the app exists (create if missing) and target London (lhr)
+      - name: Ensure Fly app exists
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
-          flyctl deploy --app trash-tracker-api --region lhr --remote-only --no-public-ips=false
+          set -e
+          # Show auth and apps for visibility
+          flyctl auth token >/dev/null
+          flyctl apps list || true
+          # Create app if it doesn't exist
+          if ! flyctl apps show trash-tracker-api >/dev/null 2>&1; then
+            flyctl apps create trash-tracker-api
+          fi
+
+      # Deploy using our Dockerfile and explicit region
+      - name: Deploy using Fly (Dockerfile, remote builder)
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          set -e
+          flyctl deploy --app trash-tracker-api --region lhr --remote-only --verbose
