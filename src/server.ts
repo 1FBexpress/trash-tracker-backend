@@ -1,32 +1,33 @@
-import Fastify from "fastify";
-import cors from "@fastify/cors";
-import { PrismaClient } from "@prisma/client";
+import fastify from 'fastify';
+import cors from '@fastify/cors';
+import { config as loadEnv } from 'dotenv';
 
-const app = Fastify({ logger: true });
-const prisma = new PrismaClient();
+loadEnv();
 
+const PORT = Number(process.env.PORT || 10000);
+const HOST = '0.0.0.0';
+
+// Allow from your frontend(s)
 const origins =
-  process.env.CORS_ORIGINS?.split(",").map(s => s.trim()).filter(Boolean) ?? true;
-await app.register(cors, { origin: origins });
+  (process.env.CORS_ORIGINS?.split(',').map(s => s.trim()).filter(Boolean)) ??
+  ['http://localhost:3000', 'https://trash-tracker-frontend.onrender.com'];
 
-app.get("/", async () => ({ ok: true }));
-app.get("/health", async () => ({ status: "ok" }));
+async function start() {
+  const app = fastify({ logger: true });
 
-app.get("/jobs", async () => {
-  const jobs = await prisma.job.findMany({ orderBy: { createdAt: "desc" } });
-  return { jobs };
-});
+  // (No top-level await)
+  await app.register(cors, { origin: origins });
 
-app.post("/jobs", async (req, reply) => {
-  const body = (req.body ?? {}) as any;
-  const title = typeof body.title === "string" && body.title.trim() ? body.title : "Untitled";
-  const job = await prisma.job.create({ data: { title } });
-  reply.code(201);
-  return { job };
-});
+  app.get('/', async () => ({ ok: true }));
+  app.get('/health', async () => ({ ok: true }));
 
-const port = Number(process.env.PORT || 10000);
-app.listen({ host: "0.0.0.0", port }).then(() => {
-  app.log.info(`Server listening on ${port}`);
-});
+  try {
+    await app.listen({ host: HOST, port: PORT });
+    app.log.info(`Server listening at http://${HOST}:${PORT}`);
+  } catch (err) {
+    app.log.error(err);
+    process.exit(1);
+  }
+}
 
+start();
