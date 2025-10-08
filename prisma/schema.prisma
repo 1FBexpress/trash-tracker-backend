@@ -1,3 +1,4 @@
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,90 +8,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-}
-
-enum Role { USER PICKER ADMIN }
-
-model PickerProfile {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  status       KycStatus @default(PENDING)
-  idPhotoUrl   String?
-  licenseUrl   String?
-  vehicleMake  String?
-  vehicleReg   String?
-  payoutReady  Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
-enum KycStatus { NONE PENDING APPROVED REJECTED }
-
-model Landfill {
-  id        String   @id @default(cuid())
-  name      String
-  address   String
-  polygon   Json      // GeoJSON Polygon
-  hours     String?
-  classes   String?
-  createdAt DateTime @default(now())
-}
-
 model Job {
-  id         String   @id @default(cuid())
-  type       JobType
-  wasteType  String
-  description String?
-  photos     Json?
-  address    String
-  pickupLat  Float?
-  pickupLng  Float?
-  scheduledAt DateTime?
-  status     JobStatus
-  userId     String
-  pickerId   String?
-  landfillId String?
-  createdAt  DateTime @default(now())
-}
-
-enum JobType { INSTANT BID }
-
-enum JobStatus { REQUESTED DISPATCHED EN_ROUTE ON_SITE LOADED AT_APPROVED_SITE DROPPED AWAIT_CONFIRM COMPLETE CANCELLED }
-
-model Bid {
-  id        String   @id @default(cuid())
-  jobId     String
-  pickerId  String
-  amount    Int      // pence
-  etaMins   Int?
-  status    String   // OPEN | ACCEPTED | REJECTED
-  createdAt DateTime @default(now())
-}
-
-model Escrow {
-  id        String   @id @default(cuid())
-  jobId     String   @unique
-  provider  String   // STRIPE | WALLET
-  amount    Int
-  currency  String   @default("GBP")
-  status    String   // AUTHORIZED | CAPTURED | RELEASED | REFUNDED | DISPUTE
-  meta      Json?
-  createdAt DateTime @default(now())
-}
-
-model Checkpoint {
-  id        String   @id @default(cuid())
-  jobId     String
-  type      String   // ON_SITE | AT_APPROVED_SITE | DROPPED
-  lat       Float
-  lng       Float
-  photoUrl  String?
-  note      String?
+  id        String   @id @default(uuid())
+  title     String
+  status    String   @default("OPEN")
   createdAt DateTime @default(now())
 }
