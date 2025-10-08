@@ -1,25 +1,25 @@
-import fastify from "fastify";
-import cors from "@fastify/cors";
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
 
-const app = fastify({ logger: true });
+const app = Fastify();
 
 const origins =
-  process.env.CORS_ORIGINS?.split(",").map(s => s.trim()) ?? ["*"];
+  process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map(s => s.trim())
+    : ['*'];
 
-async function register() {
+async function start() {
   await app.register(cors, { origin: origins });
 
-  app.get("/", async () => ({ ok: true }));
-  app.get("/health", async () => ({ status: "ok" }));
-}
+  app.get('/', async () => ({ ok: true }));
+  app.get('/health', async () => ({ status: 'ok' }));
 
-async function main() {
-  await register();
   const port = Number(process.env.PORT || 10000);
-  await app.listen({ host: "0.0.0.0", port });
+  await app.listen({ port, host: '0.0.0.0' });
+  console.log(`server listening on http://0.0.0.0:${port}`);
 }
 
-main().catch(err => {
-  app.log.error(err);
+start().catch((err) => {
+  console.error(err);
   process.exit(1);
 });
