@@ -1,14 +1,30 @@
-FROM node:20-alpine as base
+# ---------- Build stage ----------
+FROM node:20-alpine AS build
 WORKDIR /app
-COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
-RUN npm ci || yarn || pnpm i
+
+# Copy manifests first to leverage Docker layer cache
+COPY package.json ./
+# If you later add a lockfile, copy it here:
+# COPY package-lock.json ./
+
+# Install deps (use npm install since we have no lockfile yet)
+RUN npm install
+
+# Copy the rest of the source
 COPY . .
+
+# Build TypeScript -> dist
 RUN npm run build
 
-FROM node:20-alpine
+# ---------- Runtime stage ----------
+FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=base /app/dist ./dist
-COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/package.json ./package.json
-CMD ["node","dist/server.js"]
+
+# Copy built artifacts and node_modules from build stage
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./package.json
+
+EXPOSE 3000
+CMD ["node", "dist/server.js"]
