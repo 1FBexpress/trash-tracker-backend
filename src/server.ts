@@ -1,16 +1,14 @@
 import fastify from "fastify";
 import cors from "@fastify/cors";
-import dotenv from "dotenv";
-dotenv.config();
 
 const app = fastify({ logger: true });
 
-const origins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(",").map(s => s.trim())
-  : ["*"];
+const origins =
+  process.env.CORS_ORIGINS?.split(",").map(s => s.trim()) ?? ["*"];
 
 async function register() {
   await app.register(cors, { origin: origins });
+
   app.get("/", async () => ({ ok: true }));
   app.get("/health", async () => ({ status: "ok" }));
 }
