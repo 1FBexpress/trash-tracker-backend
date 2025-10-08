@@ -9,25 +9,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      # use npm install (no lockfile)
-      - name: Install deps & build
-        run: |
-          npm install
-          npm run build
 
       - name: Install Flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - name: Deploy to Fly (explicit app/region)
+      - name: Deploy using Fly.io (Dockerfile)
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
-          flyctl deploy --app trash-tracker-api --region lhr --remote-only
+          flyctl deploy --app trash-tracker-api --region lhr --remote-only --no-public-ips=false
