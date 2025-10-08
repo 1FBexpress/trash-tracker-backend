@@ -1,14 +1,29 @@
+# Build-and-run Dockerfile (no ts-node loader)
+FROM node:20-alpine AS base
+WORKDIR /app
+
+# Install deps (dev deps included so we can build)
+COPY package.json tsconfig.json ./
+RUN npm install --include=dev
+
+# Copy source (only what we need)
+COPY src ./src
+COPY scripts ./scripts
+
+# Build TypeScript to dist/
+RUN npm run build
+
+# ---- Runtime stage ----
 FROM node:20-alpine
 WORKDIR /app
 
-# install deps (include dev so ts-node/typescript are available at runtime)
-COPY package.json ./
-RUN npm install --include=dev
+# Copy only what's needed to run
+COPY --from=base /app/package.json ./
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/dist ./dist
 
-# copy the rest
-COPY . .
-
+ENV NODE_ENV=production
 EXPOSE 3000
 
-# run TypeScript directly (no separate build step)
-CMD ["node", "--loader", "ts-node/esm", "src/server.ts"]
+# Start compiled server
+CMD ["node", "dist/server.js"]
