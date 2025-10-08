@@ -6,17 +6,18 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push --accept-data-loss"
   },
   "dependencies": {
     "fastify": "^4.29.1",
-    "@fastify/cors": "^8.4.0"
+    "@fastify/cors": "^8.4.0",
+    "@prisma/client": "^5.22.0"
   },
   "devDependencies": {
     "typescript": "^5.6.3",
     "@types/node": "^20.11.30",
-    "prisma": "^5.22.0",
-    "@prisma/client": "^5.22.0"
+    "prisma": "^5.22.0"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"
