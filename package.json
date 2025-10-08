@@ -1,4 +1,22 @@
-"scripts": {
-  "build": "tsc || true",
-  "start": "prisma generate && prisma db push && node dist/server.js"
+{
+  "name": "trash-tracker-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc || true",
+    "start": "prisma generate && prisma db push && node dist/server.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^8.4.0",
+    "@prisma/client": "^5.19.1",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.29.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "prisma": "^5.19.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  }
 }
