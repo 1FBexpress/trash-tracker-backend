@@ -40,3 +40,4 @@ EXPOSE 10000
 
 # Run Prisma schema sync at container start, then start the server
 CMD ["/bin/sh","-lc","npx prisma db push --accept-data-loss && node dist/server.js"]
+
