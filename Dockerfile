@@ -24,20 +24,16 @@ FROM node:20-bookworm-slim
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Install OS deps (runtime)
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-# Copy built artifacts and node_modules
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/dist ./dist
 COPY --from=base /app/prisma ./prisma
 COPY package.json ./
 
-# Render will route to whatever port we listen on; 10000 is fine
 EXPOSE 10000
-
-# Run Prisma schema sync at container start, then start the server
 CMD ["/bin/sh","-lc","npx prisma db push --accept-data-loss && node dist/server.js"]
+
 
