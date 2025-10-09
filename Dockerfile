@@ -1,12 +1,13 @@
 # ---------- build stage ----------
 FROM node:20-alpine AS base
 WORKDIR /app
+RUN apk add --no-cache openssl1.1-compat
 
 # Install deps
 COPY package.json tsconfig.json ./
 RUN npm install --include=dev
 
-# Prisma client (generated at build so it's baked into the image)
+# Prisma client at build
 COPY prisma ./prisma
 RUN npx prisma generate || true
 
@@ -17,16 +18,16 @@ RUN npm run build
 # ---------- runtime stage ----------
 FROM node:20-alpine
 WORKDIR /app
+RUN apk add --no-cache openssl1.1-compat
 ENV NODE_ENV=production
 
-# Copy built artifacts and node_modules
+# Copy build artifacts and node_modules
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/dist ./dist
 COPY --from=base /app/prisma ./prisma
 COPY package.json ./
 
-# Render will route to whatever port we listen on; 10000 is fine
 EXPOSE 10000
 
-# 👇 Run Prisma schema sync at container start, then start the server
-CMD ["sh","-lc","npx prisma db push --accept-data-loss && node dist/server.js"]
+# If Render uses the Dockerfile CMD, this does the same as the override
+CMD ["/bin/sh","-lc","npx prisma db push --accept-data-loss && node dist/server.js"]
