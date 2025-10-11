@@ -1,16 +1,15 @@
 # ---------- build stage ----------
-FROM node:20-bookworm-slim AS base
+FROM node:20-bookworm-slim AS build
 WORKDIR /app
 
-# Install deps (dev included so tsc & prisma run)
+# install deps (include dev so tsc & prisma cli are available for build)
 COPY package.json tsconfig.json ./
-RUN npm install --include=dev
-
-# Prisma schema & client
 COPY prisma ./prisma
+RUN npm ci --include=dev
+# generate Prisma client at build time
 RUN npx prisma generate || true
 
-# Build the app
+# build TS
 COPY src ./src
 RUN npm run build
 
@@ -19,14 +18,18 @@ FROM node:20-bookworm-slim
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Copy built artifacts and only runtime deps
-COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/dist ./dist
-COPY --from=base /app/prisma ./prisma
+# install only prod deps
 COPY package.json ./
+RUN npm ci --omit=dev
 
-# Render will route traffic to whatever port we listen on; 10000 is fine
+# bring in the compiled app
+COPY --from=build /app/dist ./dist
+# bring prisma schema (needed for db push) 
+COPY --from=build /app/prisma ./prisma
+
+# (re)generate client in the runtime layer so it matches this image's node_modules
+RUN npx prisma generate || true
+
 EXPOSE 10000
-
-# Run Prisma schema sync at container start, then start the server
-CMD ["bash","-lc","npx prisma db push && node dist/server.js"]
+# use /bin/sh (present) instead of bash (was missing before)
+CMD ["sh","-c","npx prisma db push --accept-data-loss && node dist/server.js"]
