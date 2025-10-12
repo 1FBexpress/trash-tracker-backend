@@ -8,10 +8,12 @@ const fastify = Fastify({
 
 async function start() {
   try {
-    // CORS - allow all origins
+    // CORS - properly configured to allow all origins
     await fastify.register(cors, {
-      origin: '*',
-      methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+      origin: true,
+      credentials: true,
+      methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
     });
 
     // Health check
