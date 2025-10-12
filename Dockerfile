@@ -2,6 +2,11 @@
 FROM node:20-bookworm-slim AS build
 WORKDIR /app
 
+# Install OpenSSL (required by Prisma)
+RUN apt-get update && \
+    apt-get install -y openssl && \
+    rm -rf /var/lib/apt/lists/*
+
 # Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
@@ -21,6 +26,11 @@ RUN npm run build
 FROM node:20-bookworm-slim
 WORKDIR /app
 ENV NODE_ENV=production
+
+# Install OpenSSL (required by Prisma at runtime)
+RUN apt-get update && \
+    apt-get install -y openssl && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy everything from build stage
 COPY --from=build /app/package*.json ./
