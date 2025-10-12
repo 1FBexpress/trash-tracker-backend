@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install OpenSSL (required by Prisma)
 RUN apt-get update && \
-    apt-get install -y openssl && \
+    apt-get install -y openssl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy package files
@@ -29,7 +29,7 @@ ENV NODE_ENV=production
 
 # Install OpenSSL (required by Prisma at runtime)
 RUN apt-get update && \
-    apt-get install -y openssl && \
+    apt-get install -y openssl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy everything from build stage
