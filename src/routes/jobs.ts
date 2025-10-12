@@ -1,59 +1,68 @@
-import { FastifyInstance, FastifyPluginCallback } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
-
-const createJobBody = z.object({
-  title: z.string().min(1, 'title is required')
+const createJobSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
 });
 
-const updateJobBody = z.object({
-  status: z.enum(['OPEN', 'ACCEPTED', 'REJECTED']).optional(),
-  title: z.string().min(1).optional()
+const updateJobSchema = z.object({
+  title: z.string().min(1).optional(),
+  status: z.enum(['pending', 'assigned', 'done']).optional(),
+  pickerId: z.string().nullable().optional(),
 });
 
-const jobsRoutes: FastifyPluginCallback = (app: FastifyInstance, _opts, done) => {
-  // List jobs
-  app.get('/jobs', async () => {
-    const jobs = await prisma.job.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
-    return { jobs };
+export async function jobRoutes(fastify: FastifyInstance) {
+  // GET /api/jobs - List all jobs
+  fastify.get('/jobs', async (request, reply) => {
+    try {
+      const jobs = await prisma.job.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+      return reply.send(jobs);
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.status(500).send({ error: 'Failed to fetch jobs' });
+    }
   });
 
-  // Create job
-  app.post('/jobs', async (req, reply) => {
-    const parsed = createJobBody.safeParse(req.body);
-    if (!parsed.success) {
-      reply.code(400);
-      return { error: parsed.error.flatten() };
-    }
-    const job = await prisma.job.create({
-      data: {
-        title: parsed.data.title,
-        status: 'OPEN'
+  // POST /api/jobs - Create a job
+  fastify.post('/jobs', async (request, reply) => {
+    try {
+      const body = createJobSchema.parse(request.body);
+      const job = await prisma.job.create({
+        data: { title: body.title },
+      });
+      return reply.status(201).send(job);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.status(400).send({ error: error.errors });
       }
-    });
-    return { job };
-  });
-
-  // Update job (title or status)
-  app.patch('/jobs/:id', async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const parsed = updateJobBody.safeParse(req.body);
-    if (!parsed.success) {
-      reply.code(400);
-      return { error: parsed.error.flatten() };
+      fastify.log.error(error);
+      return reply.status(500).send({ error: 'Failed to create job' });
     }
-    const job = await prisma.job.update({
-      where: { id },
-      data: parsed.data
-    });
-    return { job };
   });
 
-  done();
-};
+  // PATCH /api/jobs/:id - Update a job
+  fastify.patch('/jobs/:id', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const body = updateJobSchema.parse(request.body);
 
-export default jobsRoutes;
+      const job = await prisma.job.update({
+        where: { id },
+        data: body,
+      });
+      return reply.send(job);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.status(400).send({ error: error.errors });
+      }
+      if ((error as any).code === 'P2025') {
+        return reply.status(404).send({ error: 'Job not found' });
+      }
+      fastify.log.error(error);
+      return reply.status(500).send({ error: 'Failed to update job' });
+    }
+  });
+}
