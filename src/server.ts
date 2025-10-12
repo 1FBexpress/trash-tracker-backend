@@ -1,20 +1,21 @@
 import Fastify from 'fastify';
-import cors from '@fastify/cors';
 import { jobRoutes } from './routes/jobs';
 
 const fastify = Fastify({
   logger: true,
-  bodyLimit: 1048576, // 1MB
 });
 
 async function start() {
   try {
-    // CORS - allow all origins
-    await fastify.register(cors, {
-      origin: true,
-      credentials: true,
-      methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
+    // Add CORS headers manually to every response
+    fastify.addHook('onRequest', async (request, reply) => {
+      reply.header('Access-Control-Allow-Origin', '*');
+      reply.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+      reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      
+      if (request.method === 'OPTIONS') {
+        reply.code(200).send();
+      }
     });
 
     // Health check
