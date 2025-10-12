@@ -8,20 +8,10 @@ const fastify = Fastify({
 
 async function start() {
   try {
-    // CORS - allow all origins for now
+    // CORS - allow all origins
     await fastify.register(cors, {
-      origin: true,
-    });
-
-    // Explicitly register content type parser for JSON
-    fastify.addContentTypeParser('application/json', { parseAs: 'string' }, function (req, body, done) {
-      try {
-        const json = JSON.parse(body as string);
-        done(null, json);
-      } catch (err: any) {
-        err.statusCode = 400;
-        done(err, undefined);
-      }
+      origin: '*',
+      methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     });
 
     // Health check
